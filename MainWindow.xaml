@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Magnesium.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="using:Magnesium"
+    mc:Ignorable="d">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Margin="10,34,10,10" ColumnSpacing="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="320" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Column="0" AllowDrop="True" DragEnter="FileListView_DragEnter" Drop="FileListView_Drop" BorderBrush="Gray" BorderThickness="1" CornerRadius="6" Padding="0"> 
+            <ListView x:Name="FileListView" ItemsSource="{x:Bind VideoFiles}" SelectionMode="None">
+                <ListView.HeaderTemplate>
+                    <DataTemplate>
+                        <Grid Padding="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="60"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="File" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="1" Text="Size" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2" Text="FPS" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="3" Text="New size" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="4" Text="Reduction" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="5" Text="Audio" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="6" Text="Status" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="7" Text="" FontWeight="SemiBold"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.HeaderTemplate>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:VideoFile">
+                        <Grid Padding="0" BorderBrush="LightGray" BorderThickness="0,0,0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="60"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="{x:Bind Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Grid.Column="1" Text="{x:Bind OriginalSize}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{x:Bind Fps}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="{x:Bind NewSize}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="4" Text="{x:Bind SavedPercentage}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="5" Text="{x:Bind AudioTracks}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="6" Text="{x:Bind Status}" VerticalAlignment="Center"/>
+
+                            <Button Grid.Column="7" Click="DeleteButton_Click" Tag="{x:Bind FullPath}" FontFamily="Segoe MDL2 Assets" Content="&#xE74D;" Background="Transparent" BorderThickness="0"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <StackPanel x:Name="DropHereText" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Drop files here..." Opacity="0.7"/>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Column="1" Margin="12,0,12,0" Spacing="10">
+            <TextBlock Text="Configuration" Style="{ThemeResource TitleTextBlockStyle}"/>
+
+            <TextBlock Text="Codec"/>
+            <ComboBox x:Name="CodecComboBox" SelectedIndex="0">
+                <ComboBoxItem Content="H.264 (libx264)"/>
+                <ComboBoxItem Content="H.265 (libx265)"/>
+                <ComboBoxItem Content="AV1 (libaom-av1)"/>
+                <ComboBoxItem Content="H.265 NVENC (hevc_nvenc)"/>
+            </ComboBox>
+
+            <TextBlock Text="Quality (CRF: 0-51, less is better)"/>
+            <Slider x:Name="QualitySlider" Minimum="0" Maximum="51" Value="32" TickFrequency="1" StepFrequency="1"/>
+
+            <TextBlock Text="Частота кадрів (FPS)"/>
+            <NumberBox x:Name="FpsNumberBox" Value="0" SmallChange="1" LargeChange="5" SpinButtonPlacementMode="Compact" Minimum="0"/>
+            <TextBlock Text="0 = same as input" FontSize="12" Opacity="0.7"/>
+
+            <TextBlock Text="Output folders"/>
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="OutputFolderTextBox" IsReadOnly="True" Text="Same as input"/>
+                <Button Grid.Column="1" Content="Select..." Click="SelectFolderButton_Click"/>
+            </Grid>
+
+            <Button x:Name="StartButton" Content="Convert" HorizontalAlignment="Stretch" Margin="0,20,0,0" Style="{ThemeResource AccentButtonStyle}" Click="StartButton_Click"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Spacing="5" Padding="8,12">
+            <TextBlock Text="Current file:" />
+            <ProgressBar x:Name="CurrentFileProgressBar" Minimum="0" Maximum="100" />
+            <TextBlock Text="Total:" />
+            <ProgressBar x:Name="TotalProgressBar" Minimum="0" Maximum="100"/>
+        </StackPanel>
+
+
+    </Grid>
+
+</Window>

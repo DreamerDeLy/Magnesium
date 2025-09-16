@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Magnesium (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Magnesium (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
