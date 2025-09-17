@@ -22,13 +22,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0" AllowDrop="True" DragEnter="FileListView_DragEnter" Drop="FileListView_Drop" BorderBrush="Gray" BorderThickness="1" CornerRadius="6" Padding="0"> 
+        <Grid Grid.Column="0" AllowDrop="True" DragEnter="FileListView_DragEnter" Drop="FileListView_Drop">
             <ListView x:Name="FileListView" ItemsSource="{x:Bind VideoFiles}" SelectionMode="None">
                 <ListView.HeaderTemplate>
                     <DataTemplate>
-                        <Grid Padding="14">
+                        <Grid Padding="14" ColumnSpacing="4">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                <ColumnDefinition Width="*" MinWidth="250"/>
                                 <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="60"/>
                                 <ColumnDefinition Width="100"/>
@@ -50,28 +50,37 @@
                 </ListView.HeaderTemplate>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:VideoFile">
-                        <Grid Padding="0" BorderBrush="LightGray" BorderThickness="0,0,0,1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MinWidth="150"/>
-                                <ColumnDefinition Width="80"/>
-                                <ColumnDefinition Width="60"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="60"/>
-                            </Grid.ColumnDefinitions>
+                        <Border Padding="12,4" CornerRadius="{StaticResource OverlayCornerRadius}" BorderThickness="1" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+                                Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
+                            <Grid ColumnSpacing="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*" MinWidth="150"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="0" Text="{x:Bind Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Grid.Column="1" Text="{x:Bind OriginalSize}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{x:Bind Fps}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="3" Text="{x:Bind NewSize}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="4" Text="{x:Bind SavedPercentage}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="5" Text="{x:Bind AudioTracks}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="6" Text="{x:Bind Status}" VerticalAlignment="Center"/>
+                                <Border Grid.Column="0" Margin="0,0,6,0" CornerRadius="{StaticResource OverlayCornerRadius}" Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
+                                    <Image Source="{Binding ThumbnailPath}" Height="64" />
+                                </Border>
 
-                            <Button Grid.Column="7" Click="DeleteButton_Click" Tag="{x:Bind FullPath}" FontFamily="Segoe MDL2 Assets" Content="&#xE74D;" Background="Transparent" BorderThickness="0"/>
-                        </Grid>
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                <TextBlock Grid.Column="2" Text="{Binding OriginalSize}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Fps}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="{Binding NewSize}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="5" Text="{Binding SavedPercentage}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="6" Text="{Binding AudioTracks}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="7" Text="{Binding Status}" VerticalAlignment="Center"/>
+
+                                <Button Grid.Column="8" Click="DeleteButton_Click" Tag="{Binding FullPath}" FontFamily="Segoe MDL2 Assets" Content="&#xE74D;" Background="Transparent" BorderThickness="0"/>
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -92,9 +101,9 @@
             </ComboBox>
 
             <TextBlock Text="Quality (CRF: 0-51, less is better)"/>
-            <Slider x:Name="QualitySlider" Minimum="0" Maximum="51" Value="32" TickFrequency="1" StepFrequency="1"/>
+            <Slider x:Name="QualitySlider" Minimum="0" Maximum="51" Value="32" StepFrequency="1"/>
 
-            <TextBlock Text="Частота кадрів (FPS)"/>
+            <TextBlock Text="FPS"/>
             <NumberBox x:Name="FpsNumberBox" Value="0" SmallChange="1" LargeChange="5" SpinButtonPlacementMode="Compact" Minimum="0"/>
             <TextBlock Text="0 = same as input" FontSize="12" Opacity="0.7"/>
 

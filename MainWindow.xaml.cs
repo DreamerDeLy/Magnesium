@@ -1,20 +1,23 @@
 ﻿// MainWindow.xaml.cs
+using FFMpegCore;
+using FFMpegCore.Enums;
+using FFMpegCore.Pipes;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Media.AppBroadcasting;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.ViewManagement;
 using WinRT.Interop;
-using FFMpegCore;
-using FFMpegCore.Enums;
-using FFMpegCore.Pipes;
-using System.Collections.Generic;
 
 namespace Magnesium;
 
@@ -31,13 +34,11 @@ public sealed partial class MainWindow : Window
 		SetTitleBar(null);
 	}
 
-	// Дозволяємо перетягування файлів у вікно
 	private void FileListView_DragEnter(object sender, DragEventArgs e)
 	{
 		e.AcceptedOperation = DataPackageOperation.Link;
 	}
 
-	// Обробка файлів, які перетягнули
 	private async void FileListView_Drop(object sender, DragEventArgs e)
 	{
 		if (e.DataView.Contains(StandardDataFormats.StorageItems))
@@ -50,7 +51,6 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	// Рекурсивна функція для додавання файлів
 	private async Task AddFilesToList(IReadOnlyList<IStorageItem> items)
 	{
 		foreach (var item in items)
@@ -73,7 +73,23 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	// Отримання метаданих за допомогою FFprobe
+	private async Task<string> GetThumbnail(StorageFile file, double aspectRatio)
+	{
+		string tempRelativePath = Path.Combine("temp", Guid.NewGuid().ToString() + ".png");
+		string tempPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, tempRelativePath);
+
+		// Ensure directory exists
+		if (!Directory.Exists(Path.GetDirectoryName(tempPath)))
+		{
+			Directory.CreateDirectory(Path.GetDirectoryName(tempPath));
+		}
+
+		bool resp = await FFMpeg.SnapshotAsync(file.Path, tempPath, new Size(512, Convert.ToInt32(512*aspectRatio)), TimeSpan.FromSeconds(1));
+		System.Diagnostics.Debug.WriteLine($"Snapshot for {file.Name} resp: {resp} tempPath: {tempPath}");
+
+		return "ms-appdata:///Local/" + tempRelativePath;
+	}
+
 	private async Task<VideoFile> GetVideoMetadata(StorageFile file)
 	{
 		try
@@ -81,31 +97,38 @@ public sealed partial class MainWindow : Window
 			var mediaInfo = await FFProbe.AnalyseAsync(file.Path);
 			var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
 
-			if (videoStream == null) return null; // Це не відеофайл
+			// Not a video file
+			if (videoStream == null) return null; 
 
 			var props = await file.GetBasicPropertiesAsync();
+
+			var aspectRatio = (double)videoStream.Height / videoStream.Width;
+			var thumbnailPath = await GetThumbnail(file, aspectRatio);
 
 			return new VideoFile
 			{
 				Name = file.Name,
 				FullPath = file.Path,
+				ThumbnailPath = thumbnailPath,
 				Extension = file.FileType,
 				OriginalSize = FormatBytes(props.Size),
+				NewSize = "N/A",
+				SavedPercentage = "N/A",
 				Fps = Math.Round(videoStream.AvgFrameRate, 2),
 				AudioTracks = mediaInfo.AudioStreams.Count(),
 				DateCreated = file.DateCreated.DateTime,
-				DateModified = props.DateModified.DateTime
+				DateModified = props.DateModified.DateTime,
+				Status = "Pending",
+				IsConverting = false
 			};
 		}
 		catch (Exception ex)
 		{
-			// Тут можна додати логування помилок
 			System.Diagnostics.Debug.WriteLine($"Error getting metadata for {file.Name}: {ex.Message}");
 			return null;
 		}
 	}
 
-	// Конвертер байтів у читабельний формат
 	private static string FormatBytes(ulong bytes)
 	{
 		string[] suffix = { "B", "KB", "MB", "GB", "TB" };
@@ -118,7 +141,6 @@ public sealed partial class MainWindow : Window
 		return $"{dblSByte:0.##} {suffix[i]}";
 	}
 
-	// Видалення файлу зі списку
 	private void DeleteButton_Click(object sender, RoutedEventArgs e)
 	{
 		var button = sender as Button;
@@ -130,7 +152,6 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	// Вибір теки для збереження
 	private async void SelectFolderButton_Click(object sender, RoutedEventArgs e)
 	{
 		var folderPicker = new FolderPicker();
@@ -145,7 +166,6 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	// Початок конвертації
 	private async void StartButton_Click(object sender, RoutedEventArgs e)
 	{
 		StartButton.IsEnabled = false;
@@ -166,7 +186,7 @@ public sealed partial class MainWindow : Window
 				string outputDir = _outputFolder ?? Path.GetDirectoryName(file.FullPath);
 				string outputPath = Path.Combine(outputDir, outputFileName);
 
-				// Створюємо процесор аргументів
+				// Create FFMPEG
 				var ffmpegArgumentProcessor = FFMpegArguments
 					.FromFileInput(file.FullPath)
 					.OutputToFile(outputPath, true, options =>

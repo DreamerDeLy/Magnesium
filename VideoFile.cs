@@ -1,44 +1,48 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using Windows.Storage;
 
 namespace Magnesium;
 
 public partial class VideoFile : ObservableObject
 {
 	[ObservableProperty]
-	private string name;
+	public partial string Name { get; set; }
 
 	[ObservableProperty]
-	private string fullPath;
+	public partial string FullPath { get; set; }
 
 	[ObservableProperty]
-	private string extension;
+	public partial string ThumbnailPath { get; set; }
 
 	[ObservableProperty]
-	private string originalSize;
+	public partial string Extension { get; set; }
 
 	[ObservableProperty]
-	private string newSize = "N/A";
+	public partial string OriginalSize { get; set; }
 
 	[ObservableProperty]
-	private string savedPercentage = "N/A";
+	public partial string NewSize { get; set; }
 
 	[ObservableProperty]
-	private double fps;
+	public partial string SavedPercentage { get; set; }
 
 	[ObservableProperty]
-	private int audioTracks;
+	public partial double Fps { get; set; }
 
 	[ObservableProperty]
-	private DateTime dateCreated;
+	public partial int AudioTracks { get; set; }
 
 	[ObservableProperty]
-	private DateTime dateModified;
+	public partial DateTime DateCreated { get; set; }
 
 	[ObservableProperty]
-	private string status = "Pending"; 
+	public partial DateTime DateModified { get; set; }
 
 	[ObservableProperty]
-	private bool isConverting;
+	public partial string Status { get; set; } 
+
+	[ObservableProperty]
+	public partial bool IsConverting { get; set; }
 }
