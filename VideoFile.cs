@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using FFMpegCore;
 using System;
 using System.Collections.Generic;
 using Windows.Storage;
@@ -9,6 +10,9 @@ public partial class VideoFile : ObservableObject
 {
 	[ObservableProperty]
 	public partial string Name { get; set; }
+
+	[ObservableProperty]
+	public partial TimeSpan Duration { get; set; }
 
 	[ObservableProperty]
 	public partial string FullPath { get; set; }

@@ -24,14 +24,39 @@ namespace Magnesium;
 public sealed partial class MainWindow : Window
 {
 	public ObservableCollection<VideoFile> VideoFiles { get; set; } = new();
-	private string _outputFolder = null; // null означає "та сама тека"
+	private string _outputFolder = null; // null - same folder as source
 
 	public MainWindow()
 	{
 		this.InitializeComponent();
+
 		Title = "Magnesium Video Compressor";
 		ExtendsContentIntoTitleBar = true;
 		SetTitleBar(null);
+
+		// Subscribe to the Closed event
+		Closed += MainWindow_Closed;
+	}
+
+	private void MainWindow_Closed(object sender, WindowEventArgs args)
+	{
+		System.Diagnostics.Debug.WriteLine("MainWindow closed!");
+
+		// Clean up temporary files
+		string tempPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "temp");
+
+		if (Directory.Exists(tempPath))
+		{
+			try
+			{
+				Directory.Delete(tempPath, true);
+				System.Diagnostics.Debug.WriteLine("Temporary files cleaned up.");
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error cleaning up temporary files: {ex.Message}");
+			}
+		}
 	}
 
 	private void FileListView_DragEnter(object sender, DragEventArgs e)
@@ -111,6 +136,7 @@ public sealed partial class MainWindow : Window
 				FullPath = file.Path,
 				ThumbnailPath = thumbnailPath,
 				Extension = file.FileType,
+				Duration = mediaInfo.Duration,
 				OriginalSize = FormatBytes(props.Size),
 				NewSize = "N/A",
 				SavedPercentage = "N/A",
@@ -165,6 +191,21 @@ public sealed partial class MainWindow : Window
 			OutputFolderTextBox.Text = folder.Path;
 		}
 	}
+	
+	private double GetFpsFromComboBox()
+	{
+		var selectedItem = FpsComboBox.SelectedItem as ComboBoxItem;
+
+		if (selectedItem != null)
+		{
+			if (int.TryParse(selectedItem.Tag.ToString(), out int selectedFps))
+			{
+				return selectedFps;
+			}
+		}
+
+		return 0;
+	}
 
 	private async void StartButton_Click(object sender, RoutedEventArgs e)
 	{
@@ -207,14 +248,12 @@ public sealed partial class MainWindow : Window
 						options.WithConstantRateFactor((int)QualitySlider.Value);
 
 						// Set FPS if needed
-						if (FpsNumberBox.Value > 0)
+						double fps = GetFpsFromComboBox();
+						if (fps > 0)
 						{
-							options.WithFramerate(FpsNumberBox.Value);
+							options.WithFramerate(fps);
 						}
 					});
-
-				// TODO: move to videofile
-				var mediaInfo = await FFProbe.AnalyseAsync(file.FullPath);
 
 				ffmpegArgumentProcessor.NotifyOnProgress(percent =>
 				{
@@ -222,7 +261,7 @@ public sealed partial class MainWindow : Window
 					{
 						CurrentFileProgressBar.Value = percent;
 					});
-				}, mediaInfo.Duration);
+				}, file.Duration);
 
 				await ffmpegArgumentProcessor.ProcessAsynchronously();
 
